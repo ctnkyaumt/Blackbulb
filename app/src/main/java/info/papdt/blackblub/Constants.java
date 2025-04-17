@@ -5,8 +5,6 @@ public final class Constants {
     public static final String NOTIFICATION_CHANNEL_ID_RS = "running_status";
 
     public static final String ACTION_UPDATE_STATUS = "info.papdt.blackbulb.ACTION_UPDATE_STATUS";
-    public static final String ACTION_ALARM_START = "info.papdt.blackbulb.ALARM_ACTION_START";
-    public static final String ACTION_ALARM_STOP = "info.papdt.blackbulb.ALARM_ACTION_STOP";
     public static final String ACTION_TOGGLE = "info.papdt.blackbulb.ACTION_TOGGLE";
 
     public static final class AdvancedMode {
