@@ -14,7 +14,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    # 2. Set up JDK (match your project’s Java version)
+    # 2. Set up JDK (match your project's Java version)
     - name: Set up JDK 11
       uses: actions/setup-java@v3
       with:
@@ -30,18 +30,16 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew assembleDebug --no-daemon
 
-    # 5. Collect the APK as an artifact
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v2
-      with:
-        name: blackblub-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+    # 5. Alternative method to upload artifact
+    - name: Create artifacts directory
+      run: mkdir -p artifacts
 
-    # (Optional) If you want a signed release build:
-    #- name: Build Release APK
-    #  run: ./gradlew assembleRelease --no-daemon
-    #- name: Upload Release APK
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: blackblub-release-apk
-    #    path: app/build/outputs/apk/release/app-release.apk
+    - name: Copy APK to artifacts directory
+      run: cp app/build/outputs/apk/debug/app-debug.apk artifacts/
+
+    - name: Upload artifacts using GitHub CLI
+      run: |
+        gh release create v1.0.0-artifacts -t "Build Artifacts" -n "Debug APK" ./artifacts/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
