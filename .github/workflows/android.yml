@@ -32,6 +32,11 @@ jobs:
           gradle wrapper
         fi
 
+    - name: Remove Android 33 preview platform
+      run: |
+        echo "Removing Android 33 preview platform to avoid build errors"
+        rm -rf "$ANDROID_SDK_ROOT/platforms/android-33" || echo "No preview platform found"
+
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
 
@@ -46,6 +51,11 @@ jobs:
         find app/build/outputs/apk -name "*.apk" -exec cp {} build-artifacts/ \;
         echo "APK files copied to build-artifacts directory"
       
+    - name: Debug: list build-artifacts contents
+      run: |
+        echo "=== build-artifacts tree ==="
+        ls -R build-artifacts || echo "build-artifacts does not exist!"
+
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
