@@ -47,7 +47,7 @@ jobs:
         echo "APK files copied to build-artifacts directory"
       
     - name: Upload Debug APK
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: blackblub-debug-apk
         path: build-artifacts
