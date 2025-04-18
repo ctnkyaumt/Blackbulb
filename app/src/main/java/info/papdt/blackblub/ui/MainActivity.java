@@ -130,6 +130,32 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Add color temperature filter controls
+        View yellowFilterRow = findViewById(R.id.yellow_filter_row);
+        yellowFilterRow.setVisibility(View.VISIBLE);
+        SeekBar yellowFilterSeekBar = findViewById(R.id.yellow_filter_seek_bar);
+        yellowFilterSeekBar.setProgress(mSettings.getYellowFilterAlpha());
+        yellowFilterSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int currentFilterAlpha = -1;
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                currentFilterAlpha = progress;
+                if (isRunning) {
+                    Intent intent = new Intent(MainActivity.this, MaskService.class);
+                    intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
+                    intent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, currentFilterAlpha);
+                    startService(intent);
+                }
+            }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (currentFilterAlpha != -1) {
+                    mSettings.setYellowFilterAlpha(currentFilterAlpha);
+                }
+            }
+        });
+
         // Expand filter controls
         mExpandIcon = findViewById(R.id.expand_icon);
         mExpandIcon.setOnClickListener(v -> {
