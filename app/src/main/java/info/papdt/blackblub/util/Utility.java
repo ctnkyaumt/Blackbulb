@@ -24,7 +24,6 @@ import cyanogenmod.app.CMStatusBarManager;
 import cyanogenmod.app.CustomTile;
 import info.papdt.blackblub.Constants;
 import info.papdt.blackblub.R;
-import moe.shizuku.fontprovider.FontProviderClient;
 
 /**
  * @author Fung Gwo (fython) fython@163.com
@@ -54,14 +53,7 @@ public final class Utility {
      * @param context Context
      */
     public static void applyNotoSansCJK(Context context) {
-        if (!sFontInitialized) {
-            FontProviderClient client = FontProviderClient.create(context);
-            if (client != null) {
-                client.setNextRequestReplaceFallbackFonts(true);
-                client.replace("Noto Sans CJK", "sans-serif", "sans-serif-medium");
-            }
-            sFontInitialized = true;
-        }
+        // Custom font functionality removed, no-op
     }
 
     /**

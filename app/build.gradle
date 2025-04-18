@@ -35,6 +35,5 @@ dependencies {
 	implementation fileTree(dir: 'libs', include: ['*.jar'])
 	implementation 'org.cyanogenmod:platform.sdk:2.0'
 	implementation 'moe.feng:AlipayZeroSdk:1.1'
-	implementation 'com.github.RikkaApps:FontProvider-api:v1.6.0'
 	implementation project(":libraries:timepicker")
 }
