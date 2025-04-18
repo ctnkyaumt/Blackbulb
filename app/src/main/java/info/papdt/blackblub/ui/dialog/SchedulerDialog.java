@@ -16,7 +16,6 @@ import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 import java.util.Locale;
 
 import info.papdt.blackblub.R;
-import info.papdt.blackblub.util.AlarmUtil;
 import info.papdt.blackblub.util.Settings;
 import info.papdt.blackblub.util.Utility;
 
@@ -95,7 +94,6 @@ public class SchedulerDialog extends AlertDialog implements TimePickerDialog.OnT
 		switchView.setChecked(mSettings.getBoolean(Settings.KEY_AUTO_MODE, false));
 		switchView.setOnCheckedChangeListener((compoundButton, b) -> {
             mSettings.putBoolean(Settings.KEY_AUTO_MODE, b);
-            AlarmUtil.updateAlarmSettings(getContext());
         });
 
 		rootView.findViewById(R.id.btn_ok).setOnClickListener(view -> dismiss());
@@ -144,7 +142,6 @@ public class SchedulerDialog extends AlertDialog implements TimePickerDialog.OnT
 			mSettings.putInt(Settings.KEY_HOURS_SUNSET, hrsSunset);
 			mSettings.putInt(Settings.KEY_MINUTES_SUNSET, minSunset);
 		}
-		AlarmUtil.updateAlarmSettings(getContext());
 	}
 
 }
