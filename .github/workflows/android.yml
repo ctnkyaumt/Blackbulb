@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_NDK_HOME: ''
 
     steps:
     - name: Checkout repo
@@ -32,10 +34,22 @@ jobs:
           gradle wrapper
         fi
 
-    - name: Remove Android 33 preview platform
+    - name: Clean local.properties
       run: |
-        echo "Removing Android 33 preview platform to avoid build errors"
-        rm -rf "$ANDROID_SDK_ROOT/platforms/android-33" || echo "No preview platform found"
+        echo "Removing ndk.dir from local.properties to avoid NDK missing platforms warning"
+        if [ -f local.properties ]; then
+          sed -i '/^ndk\.dir/d' local.properties
+        fi
+
+    - name: Remove preview SDK platforms
+      run: |
+        echo "Removing any preview Android SDK platforms to avoid XML parse errors"
+        for p in "$ANDROID_SDK_ROOT/platforms"/*; do
+          if grep -q "<extension-level>" "$p"/*.xml; then
+            echo "Removing preview platform $p"
+            rm -rf "$p"
+          fi
+        done || echo "No preview platforms found"
 
     - name: Build Debug APK
       run: ./gradlew assembleDebug --stacktrace
