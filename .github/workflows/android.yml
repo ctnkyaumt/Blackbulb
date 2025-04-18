@@ -50,11 +50,6 @@ jobs:
         mkdir -p build-artifacts
         find app/build/outputs/apk -name "*.apk" -exec cp {} build-artifacts/ \;
         echo "APK files copied to build-artifacts directory"
-      
-    - name: Debug: list build-artifacts contents
-      run: |
-        echo "=== build-artifacts tree ==="
-        ls -R build-artifacts || echo "build-artifacts does not exist!"
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
