@@ -7,6 +7,7 @@
 	<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 	<uses-permission android:name="cyanogenmod.permission.PUBLISH_CUSTOM_TILE"/>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
 	<permission
 		android:name="info.papdt.blackbulb.permission.CONTROL_NIGHT_SCREEN"
@@ -94,6 +95,17 @@
 				<action android:name="info.papdt.blackbulb.ACTION_UPDATE_STATUS"/>
 				<action android:name="info.papdt.blackbulb.ALARM_ACTION_START"/>
 				<action android:name="info.papdt.blackbulb.ALARM_ACTION_STOP"/>
+			</intent-filter>
+		</receiver>
+
+		<receiver
+			android:name=".receiver.BootReceiver"
+			android:exported="true"
+			android:enabled="true">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+				<action android:name="android.intent.action.QUICKBOOT_POWERON" />
+				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
 		</receiver>
 
