@@ -9,11 +9,13 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
@@ -34,6 +36,7 @@ public class MainActivity extends Activity {
     private SeekBar mSeekBar;
     private SeekBar mYellowFilterSeekBar;
     private ExpandIconView mExpandIcon;
+    private ImageView mSettingsButton;
     private boolean isUsingDarkTheme = false;
     private boolean isRunning = false;
     private boolean isActiveSliderBrightness = true; // Track which slider is active
@@ -161,8 +164,9 @@ public class MainActivity extends Activity {
 
         // Expand filter controls
         mExpandIcon = findViewById(R.id.expand_icon);
-        mExpandIcon.setImageResource(R.drawable.ic_settings_black_24dp);
-        mExpandIcon.setOnClickListener(v -> {
+        mSettingsButton = findViewById(R.id.settings_button);
+        mSettingsButton.setImageResource(R.drawable.ic_settings_black_24dp);
+        mSettingsButton.setOnClickListener(v -> {
             // Show settings menu
             showSettingsMenu();
         });
@@ -259,7 +263,7 @@ public class MainActivity extends Activity {
             switch (keyCode) {
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
                     // Focus on settings icon
-                    mExpandIcon.requestFocus();
+                    mSettingsButton.requestFocus();
                     return true;
                 case KeyEvent.KEYCODE_DPAD_LEFT:
                     // Focus on toggle button
