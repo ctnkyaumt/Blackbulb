@@ -77,7 +77,8 @@
 				android:scaleType="centerInside"
 				android:src="@drawable/ic_brightness_7_black_24dp"
 				android:tint="?attr/icon_tint"
-				android:focusable="true"/>
+				android:focusable="true"
+				android:nextFocusRight="@id/seek_bar"/>
 
 			<SeekBar
 				android:id="@+id/seek_bar"
@@ -87,7 +88,10 @@
 				android:layout_marginEnd="8dp"
 				android:progress="0"
 				android:max="80"
-				android:focusable="true"/>
+				android:focusable="true"
+				android:nextFocusLeft="@id/toggle"
+				android:nextFocusRight="@id/settings_button"
+				android:nextFocusDown="@id/yellow_filter_seek_bar"/>
 
 			<ImageView
 				android:id="@+id/settings_button"
@@ -97,7 +101,8 @@
 				android:background="?android:attr/selectableItemBackgroundBorderless"
 				android:tint="?attr/icon_tint"
 				android:padding="4dp"
-				android:focusable="true"/>
+				android:focusable="true"
+				android:nextFocusLeft="@id/seek_bar"/>
 
 			<com.github.zagum.expandicon.ExpandIconView
 				android:id="@+id/expand_icon"

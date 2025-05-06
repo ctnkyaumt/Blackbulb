@@ -69,6 +69,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         mSettings = Settings.getInstance(this);
 
+        // Reset OK button pressed state on app start
+        mSettings.setOkButtonPressed(false);
+
         // Exclude from recents if needed
         if (!mSettings.shouldShowTask()) {
             ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
@@ -114,18 +117,21 @@ public class MainActivity extends Activity {
 
         // Setup brightness seekbar
         mSeekBar = findViewById(R.id.seek_bar);
-        setSeekBarProgress(mSettings.getBrightness(50) - 20);
+        setSeekBarProgress(mSettings.getBrightness(50) - 20); // Changed default brightness to 50%
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int currentProgress = -1;
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                currentProgress = progress + 20;
-                if (isRunning) {
-                    Intent intent = new Intent(MainActivity.this, MaskService.class);
-                    intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
-                    intent.putExtra(Constants.Extra.BRIGHTNESS, currentProgress);
-                    startService(intent);
+                // Only update if in slider mode or if changed by code
+                if (!fromUser || mSettings.isOkButtonPressed()) {
+                    currentProgress = progress + 20;
+                    if (isRunning) {
+                        Intent intent = new Intent(MainActivity.this, MaskService.class);
+                        intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
+                        intent.putExtra(Constants.Extra.BRIGHTNESS, currentProgress);
+                        startService(intent);
+                    }
                 }
             }
             @Override
@@ -146,12 +152,15 @@ public class MainActivity extends Activity {
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                currentFilterAlpha = progress;
-                if (isRunning) {
-                    Intent intent = new Intent(MainActivity.this, MaskService.class);
-                    intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
-                    intent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, currentFilterAlpha);
-                    startService(intent);
+                // Only update if in slider mode or if changed by code
+                if (!fromUser || mSettings.isOkButtonPressed()) {
+                    currentFilterAlpha = progress;
+                    if (isRunning) {
+                        Intent intent = new Intent(MainActivity.this, MaskService.class);
+                        intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
+                        intent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, currentFilterAlpha);
+                        startService(intent);
+                    }
                 }
             }
             @Override
@@ -201,6 +210,12 @@ public class MainActivity extends Activity {
             mSettings.setOkButtonPressed(newState);
             if (newState) {
                 Toast.makeText(this, R.string.slider_mode_enabled, Toast.LENGTH_SHORT).show();
+                // Set initial focus to brightness slider when entering slider mode
+                if (isActiveSliderBrightness) {
+                    mSeekBar.requestFocus();
+                } else {
+                    mYellowFilterSeekBar.requestFocus();
+                }
             } else {
                 Toast.makeText(this, R.string.navigation_mode_enabled, Toast.LENGTH_SHORT).show();
             }
@@ -255,20 +270,56 @@ public class MainActivity extends Activity {
                         Toast.makeText(this, isActiveSliderBrightness ? 
                                 R.string.brightness_slider_active : 
                                 R.string.yellow_filter_slider_active, Toast.LENGTH_SHORT).show();
+                        
+                        // Set focus to the active slider
+                        if (isActiveSliderBrightness) {
+                            mSeekBar.requestFocus();
+                        } else {
+                            mYellowFilterSeekBar.requestFocus();
+                        }
                     }
                     return true;
             }
         } else {
-            // Navigation mode
+            // Navigation mode - handle directional navigation
             switch (keyCode) {
                 case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    // Focus on settings icon
-                    mSettingsButton.requestFocus();
-                    return true;
+                    // Handle navigation based on current focus
+                    if (mToggle.isFocused()) {
+                        mSeekBar.requestFocus();
+                        return true;
+                    } else if (mSeekBar.isFocused()) {
+                        mSettingsButton.requestFocus();
+                        return true;
+                    }
+                    break;
+                    
                 case KeyEvent.KEYCODE_DPAD_LEFT:
-                    // Focus on toggle button
-                    mToggle.requestFocus();
-                    return true;
+                    // Handle navigation based on current focus
+                    if (mSettingsButton.isFocused()) {
+                        mSeekBar.requestFocus();
+                        return true;
+                    } else if (mSeekBar.isFocused()) {
+                        mToggle.requestFocus();
+                        return true;
+                    }
+                    break;
+                    
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    // Navigate to yellow filter slider
+                    if (mSeekBar.isFocused()) {
+                        mYellowFilterSeekBar.requestFocus();
+                        return true;
+                    }
+                    break;
+                    
+                case KeyEvent.KEYCODE_DPAD_UP:
+                    // Navigate back to brightness slider
+                    if (mYellowFilterSeekBar.isFocused()) {
+                        mSeekBar.requestFocus();
+                        return true;
+                    }
+                    break;
             }
         }
         
