@@ -98,4 +98,15 @@
 	<string name="open_source_license">Open source license</string>
 	<string name="open_source_license_summary">Night Screen is inseparable from the efforts of these open source projects.</string>
 
+	<!-- Settings Menu -->
+	<string name="settings_title">Settings</string>
+	<string name="settings_startup_brightness">Startup Brightness</string>
+	<string name="settings_startup_yellow_filter">Startup Yellow Filter</string>
+	<string name="settings_saved">Settings saved</string>
+	<string name="ok_button_pressed_message">OK button pressed. You can now use the remote controls.</string>
+	<string name="slider_mode_enabled">Slider adjustment mode enabled</string>
+	<string name="navigation_mode_enabled">Navigation mode enabled</string>
+	<string name="brightness_slider_active">Brightness slider active</string>
+	<string name="yellow_filter_slider_active">Yellow filter slider active</string>
+
 </resources>

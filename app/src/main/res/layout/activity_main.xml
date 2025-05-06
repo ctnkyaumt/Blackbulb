@@ -76,7 +76,8 @@
 				android:importantForAccessibility="no"
 				android:scaleType="centerInside"
 				android:src="@drawable/ic_brightness_7_black_24dp"
-				android:tint="?attr/icon_tint"/>
+				android:tint="?attr/icon_tint"
+				android:focusable="true"/>
 
 			<SeekBar
 				android:id="@+id/seek_bar"
@@ -85,7 +86,8 @@
 				android:layout_weight="1"
 				android:layout_marginEnd="8dp"
 				android:progress="0"
-				android:max="80"/>
+				android:max="80"
+				android:focusable="true"/>
 
 			<com.github.zagum.expandicon.ExpandIconView
 				android:id="@+id/expand_icon"
@@ -97,7 +99,8 @@
 				app:eiv_colorLess="?attr/icon_tint"
 				app:eiv_colorMore="?attr/icon_tint"
 				app:eiv_colorIntermediate="?attr/icon_tint"
-				app:eiv_padding="8dp"/>
+				app:eiv_padding="8dp"
+				android:focusable="true"/>
 
 		</LinearLayout>
 
@@ -108,7 +111,8 @@
 			android:padding="16dp"
 			android:background="?attr/icon_tint"
 			android:textColor="@android:color/white"
-			android:text="@string/button_tip_text"/>
+			android:text="@string/button_tip_text"
+			android:visibility="gone"/>
 
 		<LinearLayout
 			android:id="@+id/mini_scheduler_info"
@@ -116,7 +120,8 @@
 			android:layout_height="wrap_content"
 			android:layout_marginBottom="12dp"
 			android:gravity="center_vertical"
-			android:orientation="horizontal">
+			android:orientation="horizontal"
+			android:visibility="gone">
 
 			<ImageView
 				android:layout_width="16dp"

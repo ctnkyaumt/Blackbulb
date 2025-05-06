@@ -8,7 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
-import android.os.*;
+import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -31,11 +32,13 @@ public class MainActivity extends Activity {
     // Views & States
     private ImageButton mToggle;
     private SeekBar mSeekBar;
+    private SeekBar mYellowFilterSeekBar;
     private ExpandIconView mExpandIcon;
     private boolean isUsingDarkTheme = false;
+    private boolean isRunning = false;
+    private boolean isActiveSliderBrightness = true; // Track which slider is active
 
     // Service states
-    private boolean isRunning = false;
 
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -108,7 +111,7 @@ public class MainActivity extends Activity {
 
         // Setup brightness seekbar
         mSeekBar = findViewById(R.id.seek_bar);
-        setSeekBarProgress(mSettings.getBrightness(60) - 20);
+        setSeekBarProgress(mSettings.getBrightness(50) - 20);
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int currentProgress = -1;
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -133,9 +136,9 @@ public class MainActivity extends Activity {
         // Add color temperature filter controls
         View yellowFilterRow = findViewById(R.id.yellow_filter_row);
         yellowFilterRow.setVisibility(View.VISIBLE);
-        SeekBar yellowFilterSeekBar = findViewById(R.id.yellow_filter_seek_bar);
-        yellowFilterSeekBar.setProgress(mSettings.getYellowFilterAlpha());
-        yellowFilterSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        mYellowFilterSeekBar = findViewById(R.id.yellow_filter_seek_bar);
+        mYellowFilterSeekBar.setProgress(mSettings.getYellowFilterAlpha());
+        mYellowFilterSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int currentFilterAlpha = -1;
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override
@@ -158,8 +161,10 @@ public class MainActivity extends Activity {
 
         // Expand filter controls
         mExpandIcon = findViewById(R.id.expand_icon);
+        mExpandIcon.setImageResource(R.drawable.ic_settings_black_24dp);
         mExpandIcon.setOnClickListener(v -> {
-            isUsingDarkTheme = !isUsingDarkTheme; // placeholder: keep expansion logic if needed
+            // Show settings menu
+            showSettingsMenu();
         });
     }
 
@@ -185,14 +190,84 @@ public class MainActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         int action = event.getAction();
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
-                if (action == KeyEvent.ACTION_DOWN) setSeekBarProgress(mSeekBar.getProgress() - 5);
-                return true;
-            case KeyEvent.KEYCODE_VOLUME_UP:
-                if (action == KeyEvent.ACTION_DOWN) setSeekBarProgress(mSeekBar.getProgress() + 5);
-                return true;
+        
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+            // Toggle OK button pressed state when OK/Enter is pressed
+            boolean newState = !mSettings.isOkButtonPressed();
+            mSettings.setOkButtonPressed(newState);
+            if (newState) {
+                Toast.makeText(this, R.string.slider_mode_enabled, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, R.string.navigation_mode_enabled, Toast.LENGTH_SHORT).show();
+            }
+            return true;
         }
+        
+        // Handle directional keys based on current mode
+        if (mSettings.isOkButtonPressed()) {
+            // Slider adjustment mode
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_VOLUME_DOWN:
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if (action == KeyEvent.ACTION_DOWN) {
+                        if (isActiveSliderBrightness) {
+                            setSeekBarProgress(mSeekBar.getProgress() - 5);
+                        } else {
+                            int progress = Math.max(0, mYellowFilterSeekBar.getProgress() - 5);
+                            mYellowFilterSeekBar.setProgress(progress);
+                            if (isRunning) {
+                                Intent intent = new Intent(this, MaskService.class);
+                                intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
+                                intent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, progress);
+                                startService(intent);
+                            }
+                            mSettings.setYellowFilterAlpha(progress);
+                        }
+                    }
+                    return true;
+                case KeyEvent.KEYCODE_VOLUME_UP:
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if (action == KeyEvent.ACTION_DOWN) {
+                        if (isActiveSliderBrightness) {
+                            setSeekBarProgress(mSeekBar.getProgress() + 5);
+                        } else {
+                            int progress = Math.min(100, mYellowFilterSeekBar.getProgress() + 5);
+                            mYellowFilterSeekBar.setProgress(progress);
+                            if (isRunning) {
+                                Intent intent = new Intent(this, MaskService.class);
+                                intent.putExtra(Constants.Extra.ACTION, Constants.Action.UPDATE);
+                                intent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, progress);
+                                startService(intent);
+                            }
+                            mSettings.setYellowFilterAlpha(progress);
+                        }
+                    }
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_UP:
+                case KeyEvent.KEYCODE_DPAD_DOWN:
+                    if (action == KeyEvent.ACTION_DOWN) {
+                        // Toggle between brightness and yellow filter sliders
+                        isActiveSliderBrightness = !isActiveSliderBrightness;
+                        Toast.makeText(this, isActiveSliderBrightness ? 
+                                R.string.brightness_slider_active : 
+                                R.string.yellow_filter_slider_active, Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+            }
+        } else {
+            // Navigation mode
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    // Focus on settings icon
+                    mExpandIcon.requestFocus();
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    // Focus on toggle button
+                    mToggle.requestFocus();
+                    return true;
+            }
+        }
+        
         return super.onKeyDown(keyCode, event);
     }
 
@@ -214,5 +289,73 @@ public class MainActivity extends Activity {
     private void stopMaskService() {
         ActionReceiver.sendActionStop(this);
         setToggleIconState(isRunning = false);
+    }
+
+    // Add method to show settings menu
+    private void showSettingsMenu() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.settings_title);
+        
+        String[] options = {
+            getString(R.string.settings_startup_brightness),
+            getString(R.string.settings_startup_yellow_filter)
+        };
+        
+        builder.setItems(options, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    // Set startup brightness
+                    showBrightnessSettingDialog();
+                    break;
+                case 1:
+                    // Set startup yellow filter
+                    showYellowFilterSettingDialog();
+                    break;
+            }
+        });
+        
+        builder.show();
+    }
+    
+    private void showBrightnessSettingDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.settings_startup_brightness);
+        
+        final SeekBar seekBar = new SeekBar(this);
+        seekBar.setMax(80);
+        seekBar.setProgress(mSettings.getBrightness(50) - 20);
+        
+        builder.setView(seekBar);
+        
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+            int brightness = seekBar.getProgress() + 20;
+            mSettings.setBrightness(brightness);
+            Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show();
+        });
+        
+        builder.setNegativeButton(android.R.string.cancel, null);
+        
+        builder.show();
+    }
+    
+    private void showYellowFilterSettingDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.settings_startup_yellow_filter);
+        
+        final SeekBar seekBar = new SeekBar(this);
+        seekBar.setMax(100);
+        seekBar.setProgress(mSettings.getYellowFilterAlpha());
+        
+        builder.setView(seekBar);
+        
+        builder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+            int yellowFilter = seekBar.getProgress();
+            mSettings.setYellowFilterAlpha(yellowFilter);
+            Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show();
+        });
+        
+        builder.setNegativeButton(android.R.string.cancel, null);
+        
+        builder.show();
     }
 }

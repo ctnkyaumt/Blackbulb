@@ -49,7 +49,8 @@
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
 			android:max="100"
-			android:progress="0"/>
+			android:progress="0"
+			android:focusable="true"/>
 
 	</LinearLayout>
 

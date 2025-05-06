@@ -18,7 +18,8 @@ public class Settings {
 			KEY_HOURS_SUNSET = "hrs_sunset", KEY_MINUTES_SUNSET = "min_sunset",
 			KEY_YELLOW_FILTER_ALPHA = "yellow_filter_alpha", KEY_BUTTON_TIP = "button_tip",
 			KEY_HANDLE_VOLUME_KEY = "handle_volume_key", KEY_SHOW_TASK = "show_task",
-			KEY_AUTO_ENABLE_WHEN_BRIGHTNESS_CHANGED = "auto_enabled_when_brightness_changed";
+			KEY_AUTO_ENABLE_WHEN_BRIGHTNESS_CHANGED = "auto_enabled_when_brightness_changed",
+			KEY_OK_BUTTON_PRESSED = "ok_button_pressed";
 
 	private volatile static Settings sInstance;
 
@@ -158,6 +159,14 @@ public class Settings {
 
     public void setNeedButtonTip(boolean value) {
 	    putBoolean(KEY_BUTTON_TIP, value);
+    }
+
+    public boolean isOkButtonPressed() {
+        return getBoolean(KEY_OK_BUTTON_PRESSED, false);
+    }
+    
+    public void setOkButtonPressed(boolean value) {
+        putBoolean(KEY_OK_BUTTON_PRESSED, value);
     }
 
 }
