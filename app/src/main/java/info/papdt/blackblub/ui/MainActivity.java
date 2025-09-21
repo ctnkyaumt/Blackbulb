@@ -142,6 +142,46 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Prevent SeekBar from changing in navigation mode; allow focus navigation
+        mSeekBar.setOnKeyListener((v, keyCode, event) -> {
+            if (!mSettings.isOkButtonPressed()) { // Navigation mode
+                // Let OK/Enter toggle modes at Activity level
+                if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+                    return false;
+                }
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_DPAD_RIGHT:
+                            // Move focus to settings button
+                            if (mSettingsButton != null) {
+                                mSettingsButton.requestFocus();
+                            }
+                            return true;
+                        case KeyEvent.KEYCODE_DPAD_LEFT:
+                            // Move focus back to toggle
+                            mToggle.requestFocus();
+                            return true;
+                        case KeyEvent.KEYCODE_DPAD_DOWN:
+                            // Move focus to yellow filter slider
+                            if (mYellowFilterSeekBar != null) {
+                                mYellowFilterSeekBar.requestFocus();
+                            }
+                            return true;
+                        case KeyEvent.KEYCODE_DPAD_UP:
+                            // Stay on current control
+                            return true;
+                        case KeyEvent.KEYCODE_VOLUME_DOWN:
+                        case KeyEvent.KEYCODE_VOLUME_UP:
+                            // Do not alter progress in navigation mode
+                            return true;
+                    }
+                }
+                // Consume other keys to avoid SeekBar handling them
+                return true;
+            }
+            return false; // In slider mode, allow normal handling
+        });
+
         // Add color temperature filter controls
         View yellowFilterRow = findViewById(R.id.yellow_filter_row);
         yellowFilterRow.setVisibility(View.VISIBLE);
@@ -169,6 +209,33 @@ public class MainActivity extends Activity {
                     mSettings.setYellowFilterAlpha(currentFilterAlpha);
                 }
             }
+        });
+
+        // Prevent yellow filter SeekBar from changing in navigation mode; allow focus navigation
+        mYellowFilterSeekBar.setOnKeyListener((v, keyCode, event) -> {
+            if (!mSettings.isOkButtonPressed()) { // Navigation mode
+                // Let OK/Enter toggle modes at Activity level
+                if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+                    return false;
+                }
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_DPAD_UP:
+                            // Move focus back to brightness slider
+                            mSeekBar.requestFocus();
+                            return true;
+                        case KeyEvent.KEYCODE_DPAD_LEFT:
+                        case KeyEvent.KEYCODE_DPAD_RIGHT:
+                        case KeyEvent.KEYCODE_VOLUME_DOWN:
+                        case KeyEvent.KEYCODE_VOLUME_UP:
+                            // Do not alter progress; stay/freeze
+                            return true;
+                    }
+                }
+                // Consume other keys to avoid SeekBar handling them
+                return true;
+            }
+            return false; // In slider mode, allow normal handling
         });
 
         // Expand filter controls
@@ -231,6 +298,8 @@ public class MainActivity extends Activity {
                     if (action == KeyEvent.ACTION_DOWN) {
                         if (isActiveSliderBrightness) {
                             setSeekBarProgress(mSeekBar.getProgress() - 5);
+                            int newBrightness = mSeekBar.getProgress() + 20;
+                            mSettings.setBrightness(newBrightness);
                         } else {
                             int progress = Math.max(0, mYellowFilterSeekBar.getProgress() - 5);
                             mYellowFilterSeekBar.setProgress(progress);
@@ -249,6 +318,8 @@ public class MainActivity extends Activity {
                     if (action == KeyEvent.ACTION_DOWN) {
                         if (isActiveSliderBrightness) {
                             setSeekBarProgress(mSeekBar.getProgress() + 5);
+                            int newBrightness = mSeekBar.getProgress() + 20;
+                            mSettings.setBrightness(newBrightness);
                         } else {
                             int progress = Math.min(100, mYellowFilterSeekBar.getProgress() + 5);
                             mYellowFilterSeekBar.setProgress(progress);

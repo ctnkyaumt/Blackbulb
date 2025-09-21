@@ -13,9 +13,6 @@ import info.papdt.blackblub.util.Utility;
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = BootReceiver.class.getSimpleName();
     
-    // Predefined settings for auto-start
-    private static final int DEFAULT_BRIGHTNESS = 45;
-    private static final int DEFAULT_YELLOW_FILTER = 60;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -27,22 +24,22 @@ public class BootReceiver extends BroadcastReceiver {
             // Get settings
             Settings settings = Settings.getInstance(context);
             
-            // Save the predefined settings
-            settings.setBrightness(DEFAULT_BRIGHTNESS);
-            settings.setYellowFilterAlpha(DEFAULT_YELLOW_FILTER);
+            // Read saved settings (do not override user preferences)
+            int brightness = settings.getBrightness(50);
+            int yellowFilter = settings.getYellowFilterAlpha(0);
             
-            // Create intent to start the service
+            // Create intent to start the service with user's saved settings
             Intent startIntent = new Intent(context, MaskService.class);
             startIntent.putExtra(Constants.Extra.ACTION, Constants.Action.START);
-            startIntent.putExtra(Constants.Extra.BRIGHTNESS, DEFAULT_BRIGHTNESS);
+            startIntent.putExtra(Constants.Extra.BRIGHTNESS, brightness);
             startIntent.putExtra(Constants.Extra.ADVANCED_MODE, settings.getAdvancedMode());
-            startIntent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, DEFAULT_YELLOW_FILTER);
+            startIntent.putExtra(Constants.Extra.YELLOW_FILTER_ALPHA, yellowFilter);
             
             // Start the service
             Utility.startForegroundService(context, startIntent);
             
-            Log.i(TAG, "Blackbulb started with brightness: " + DEFAULT_BRIGHTNESS + 
-                  ", yellow filter: " + DEFAULT_YELLOW_FILTER);
+            Log.i(TAG, "Blackbulb started with brightness: " + brightness + 
+                  ", yellow filter: " + yellowFilter);
         }
     }
 }
