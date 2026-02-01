@@ -75,6 +75,19 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
+      - name: Sign APK
+        if: success()
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "30.0.3"
+
       - name: List output files
         run: |
           echo "Listing output APK files:"
@@ -83,7 +96,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "app/build/outputs/apk/**/*.apk"
+          artifacts: "${{ steps.sign_app.outputs.signedReleaseFile }}"
           tag: "v${{ steps.bump_version.outputs.new_version_name }}"
           name: "Release v${{ steps.bump_version.outputs.new_version_name }}"
           body: "Automatic release for version ${{ steps.bump_version.outputs.new_version_name }} (Build ${{ steps.bump_version.outputs.new_version_code }})"
