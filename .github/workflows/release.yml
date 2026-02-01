@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version Name (e.g. 2.3.0). If empty, it will increment the patch version.'
+        required: false
+        default: ''
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          GRADLE_FILE="app/build.gradle"
+          VERSION_CODE=$(grep "versionCode" $GRADLE_FILE | awk '{print $2}')
+          VERSION_NAME=$(grep "versionName" $GRADLE_FILE | sed -E "s/.*'(.+)'.*/\1/")
+          
+          echo "Current versionCode: $VERSION_CODE"
+          echo "Current versionName: $VERSION_NAME"
+          
+          NEW_VERSION_CODE=$((VERSION_CODE + 1))
+          
+          INPUT_VERSION="${{ github.event.inputs.version_name }}"
+          if [ -z "$INPUT_VERSION" ]; then
+              IFS='.' read -r -a parts <<< "$VERSION_NAME"
+              if [ ${#parts[@]} -eq 3 ]; then
+                  parts[2]=$((parts[2] + 1))
+                  NEW_VERSION_NAME="${parts[0]}.${parts[1]}.${parts[2]}"
+              else
+                  NEW_VERSION_NAME="$VERSION_NAME.1"
+              fi
+          else
+              NEW_VERSION_NAME="$INPUT_VERSION"
+          fi
+          
+          echo "New versionCode: $NEW_VERSION_CODE"
+          echo "New versionName: $NEW_VERSION_NAME"
+          
+          sed -i "s/versionCode $VERSION_CODE/versionCode $NEW_VERSION_CODE/" $GRADLE_FILE
+          sed -i "s/versionName '$VERSION_NAME'/versionName '$NEW_VERSION_NAME'/" $GRADLE_FILE
+          
+          echo "new_version_name=$NEW_VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "new_version_code=$NEW_VERSION_CODE" >> $GITHUB_OUTPUT
+
+      - name: Commit and push version bump
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Bump version to ${{ steps.bump_version.outputs.new_version_name }} (${{ steps.bump_version.outputs.new_version_code }})"
+          file_pattern: 'app/build.gradle'
+
+      - name: Setup Gradle
+        run: |
+          chmod +x ./gradlew
+          # Check gradle version
+          ./gradlew --version
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: List output files
+        run: |
+          echo "Listing output APK files:"
+          find app/build/outputs/apk -type f -name "*.apk"
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "app/build/outputs/apk/**/*.apk"
+          tag: "v${{ steps.bump_version.outputs.new_version_name }}"
+          name: "Release v${{ steps.bump_version.outputs.new_version_name }}"
+          body: "Automatic release for version ${{ steps.bump_version.outputs.new_version_name }} (Build ${{ steps.bump_version.outputs.new_version_code }})"
+          token: ${{ secrets.GITHUB_TOKEN }}
