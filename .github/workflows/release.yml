@@ -78,23 +78,41 @@ jobs:
       - name: Sign APK
         if: success()
         id: sign_app
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # Find the unsigned APK
+          UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "Found APK: $UNSIGNED_APK"
+          
+          # Get latest build tools version
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools/ | tail -n 1)
+          echo "Using Build Tools Version: $BUILD_TOOLS_VERSION"
+          ZIPALIGN=$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/zipalign
+          APKSIGNER=$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner
+          
+          # Decode keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+          
+          # Align APK
+          $ZIPALIGN -v 4 "$UNSIGNED_APK" app-release-aligned.apk
+          
+          # Sign APK
+          $APKSIGNER sign --ks release.keystore \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass pass:"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --out app-release-signed.apk app-release-aligned.apk
+          
+          echo "signed_file=app-release-signed.apk" >> $GITHUB_OUTPUT
 
       - name: List output files
         run: |
-          echo "Listing output APK files:"
-          find app/build/outputs/apk -type f -name "*.apk"
+          echo "Listing output files:"
+          ls -lh *.apk
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ steps.sign_app.outputs.signedReleaseFile }}"
+          artifacts: "${{ steps.sign_app.outputs.signed_file }}"
           tag: "v${{ steps.bump_version.outputs.new_version_name }}"
           name: "Release v${{ steps.bump_version.outputs.new_version_name }}"
           body: "Automatic release for version ${{ steps.bump_version.outputs.new_version_name }} (Build ${{ steps.bump_version.outputs.new_version_code }})"
